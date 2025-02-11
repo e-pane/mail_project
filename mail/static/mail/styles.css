@@ -1,0 +1,14 @@
+textarea {
+    min-height: 400px;
+}
+
+.email-link {
+    color: black !important; /* Keep text black */
+    text-decoration: none !important; /* Remove underline */
+}
+
+.email-link:hover {
+    color: black !important; /* Keep black on hover */
+    text-decoration: none !important; /* Remove underline on hover */
+    font-weight: bold;
+}
