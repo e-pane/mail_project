@@ -56,7 +56,7 @@ function createEmailDiv(emailId, sender, subject, timestamp, isRead, isArchived,
   emailDiv.style.background = isRead ? "rgba(169, 169, 169, 0.5)" : "rgba(255, 255, 255, 0.5)";
 
   emailDiv.innerHTML = `
-    <a href="#" class="email-link" data-email-id="${emailId}">
+    <a href="#" class="email-link" data-email-id="${emailId}" data-mailbox="${mailbox}">
       <strong>Sender:</strong> ${sender} <br>
       <strong>Subject:</strong> ${subject} <br>
       <strong>Timestamp:</strong> ${timestamp}
@@ -66,7 +66,7 @@ function createEmailDiv(emailId, sender, subject, timestamp, isRead, isArchived,
   const markAsReadButton = createReadToggleButton(emailId, isRead, mailbox);
   emailDiv.appendChild(markAsReadButton);
 
-  if (mailbox !== 'sent') {
+  if (mailbox === 'inbox' || mailbox === 'archive') {
     const archiveToggleButton = createArchiveToggleButton(emailId, isArchived, mailbox);
     emailDiv.appendChild(archiveToggleButton);
   }
@@ -94,15 +94,17 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#emails-view').addEventListener('click', function(event) {
     if (event.target.classList.contains('email-link')) {
       const emailId = event.target.getAttribute('data-email-id');
-      get_email(emailId);
+      const mailbox = event.target.getAttribute('data-mailbox');
+      get_email(emailId, mailbox);
     }
   });
   // Before any button is clicked, call load_mailbox, passing inbox to show user's mailbox to start 
   // session
-  load_mailbox('inbox');
+  const defaultMailbox = 'inbox';  // Define it as a variable
+  load_mailbox(defaultMailbox);
 });
 
-function get_email(emailId) { // dynamically render individual emails when you click on an email in mailbox
+function get_email(emailId, mailbox) { // dynamically render individual emails when you click on an email in mailbox
   // hide the emails-view (Inbox, sent, archive) and the compose-view and show individual-email-view
   document.querySelector("#emails-view").style.display = "none";
   document.querySelector("#individual-email-view").style.display = 'block';
@@ -139,7 +141,7 @@ function get_email(emailId) { // dynamically render individual emails when you c
       <strong>Timestamp:</strong> ${emailData.timestamp}
     `;
 
-    const markAsReadButton = createReadToggleButton(emailId, true, 'inbox');
+    const markAsReadButton = createReadToggleButton(emailId, true, mailbox);
     emailView.appendChild(emailDetailsDiv);
     emailView.appendChild(markAsReadButton);
 
@@ -190,7 +192,7 @@ function get_email(emailId) { // dynamically render individual emails when you c
       // correct read/unread status for all emails in the mailbox
       .then(response => {
         if (response.ok) {
-          load_mailbox('inbox');
+          load_mailbox(mailbox);
         }
       });
     };
@@ -212,7 +214,7 @@ function get_email(emailId) { // dynamically render individual emails when you c
       })
       .then(response => {
         if (response.ok) {
-          load_mailbox('inbox');
+          load_mailbox(mailbox);
         }
       });
     };
