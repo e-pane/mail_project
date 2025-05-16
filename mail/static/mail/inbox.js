@@ -1,3 +1,78 @@
+function createReadToggleButton(emailId, readStatus, mailbox){
+  const button = document.createElement('button');
+  button.classList.add("btn", "btn-sm", "btn-outline-secondary");
+  const label = readStatus ? "Mark as Unread" : "Mark as Read"
+  button.innerHTML = label;
+
+  button.onclick = function () {
+    fetch(`/emails/${emailId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        read: !readStatus
+      })
+    })
+    .then(response => {
+      if (response.ok) {
+        load_mailbox(mailbox);
+      }
+    });
+  };
+  return button;
+}
+
+function createArchiveToggleButton(emailId, isArchived, mailbox){
+  const button = document.createElement("button");
+  button.classList.add("btn", "btn-sm", "btn-outline-secondary");
+
+  const newArchiveStatus = !isArchived; 
+  button.innerHTML = newArchiveStatus ? "Add to Archive" : "Move to Inbox";
+
+  button.onclick = function () {
+    fetch(`/emails/${emailId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ archived: newArchiveStatus })
+    })
+    .then(response => {
+      if (response.ok) {
+        load_mailbox(mailbox); // reload the inbox after moving to inbox
+      }
+    })
+  }
+  return button;
+}
+
+function createEmailDiv(emailId, sender, subject, timestamp, isRead, isArchived, mailbox) {
+  const emailDiv = document.createElement("div");
+  emailDiv.style.border = "1px solid black"; 
+  emailDiv.style.padding = "10px"; 
+  emailDiv.style.marginBottom = "10px"; 
+
+  emailDiv.style.background = isRead ? "rgba(169, 169, 169, 0.5)" : "rgba(255, 255, 255, 0.5)";
+
+  emailDiv.innerHTML = `
+    <a href="#" class="email-link" data-email-id="${emailId}">
+      <strong>Sender:</strong> ${sender} <br>
+      <strong>Subject:</strong> ${subject} <br>
+      <strong>Timestamp:</strong> ${timestamp}
+    </a>
+    `;
+
+  const markAsReadButton = createReadToggleButton(emailId, isRead, mailbox);
+  emailDiv.appendChild(markAsReadButton);
+
+  if (mailbox !== 'sent') {
+    const archiveToggleButton = createArchiveToggleButton(emailId, isArchived, mailbox);
+    emailDiv.appendChild(archiveToggleButton);
+  }
+  return emailDiv;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
 
   // For top 3, if user clicks inbox button, for example, listen for it, and on click call load_mailbox, 
@@ -63,6 +138,11 @@ function get_email(emailId) { // dynamically render individual emails when you c
       <strong>Subject:</strong> ${emailData.subject} <br>
       <strong>Timestamp:</strong> ${emailData.timestamp}
     `;
+
+    const markAsReadButton = createReadToggleButton(emailId, true, 'inbox');
+    emailView.appendChild(emailDetailsDiv);
+    emailView.appendChild(markAsReadButton);
+
     // dynamically create a reply button for each individually rendered email and give it the same classes
     // as all the static buttons with .add  Make the button say "Reply"
     const replyButton = document.createElement("button");
@@ -93,9 +173,7 @@ function get_email(emailId) { // dynamically render individual emails when you c
     // dynamically create a "Mark as Unread" button after the Reply button.  Give it same class as 
     // our other buttons.  It will say Mark as Unread, since all emails showing dynamically here will have
     // been considered "read" and their read status will have been set to "read" in the code above.
-    const markAsReadButton = document.createElement("button");
-    markAsReadButton.classList.add("btn", "btn-sm", "btn-outline-secondary");
-    markAsReadButton.innerHTML = "Mark as Unread"; 
+
     // add an anonymous function to the button when clicked and send a PUT request to the server to update
     // read status to "false" to mark the email as "unread"
     markAsReadButton.onclick = function() {
@@ -148,7 +226,6 @@ function get_email(emailId) { // dynamically render individual emails when you c
       ${emailData.body}
     `;
     // add all the newly created elements to the parent emailView div element
-    emailView.appendChild(emailDetailsDiv);
     emailView.appendChild(replyButton);
     emailView.appendChild(markAsReadButton);
     emailView.appendChild(archiveButton);
@@ -223,33 +300,20 @@ function load_mailbox(mailbox) {
     // loop through each dict in the array and call the following arrow function - could also be an 
     // anonymous function here too, as emails.forEach(function(email) {.....})
     emails.forEach(email => {
-      // for each email in the array, create a div element
-      const emailDiv = document.createElement("div");
-      // if read status is true, make background grey, if read is false, make background white
-      if (email.read) {
-        emailDiv.style.background = "rgba(169, 169, 169, 0.5)"; 
-      } else {
-        emailDiv.style.background = "rgba(255, 255, 255, 0.5)"; 
-      }
-      // keep styling the emailDiv div here inline..
-      emailDiv.style.border = "1px solid black"; 
-      emailDiv.style.padding = "10px"; 
-      emailDiv.style.marginBottom = "10px"; 
-      // populate the innerHTML of each div element with the following from the JS object, wrapping 
-      // all 3 values in an anchor tag so we can click on any part of the email and get a unified response
-      // giving the anchor tag an href attribute of "#" to keep it from linking to anything else other
-      // that what we want our JS to link it to.  giving the a tag a data attribute of email-id and 
-      // setting it equal to the id of each individual email as sent forward from the server as part of 
-      // the server's json response
-      emailDiv.innerHTML = `
-        <a href="#" class="email-link" data-email-id="${email.id}">
-          <strong>Sender:</strong> ${email.sender} <br>
-          <strong>Subject:</strong> ${email.subject} <br>
-          <strong>Timestamp:</strong> ${email.timestamp}
-        </a>
-        `;
-      // add each emailDiv div element to the parent emailsView element
-      emailsView.appendChild(emailDiv);
+      const emailDiv = createEmailDiv(
+          email.id,           // emailId
+          email.sender,       // sender
+          email.subject,      // subject
+          email.timestamp,    // timestamp
+          email.read,         // isRead
+          email.archived,     // isArchived
+          mailbox             // pass the mailbox type (inbox, sent, archive)
+        );
+      
+      emailsView.appendChild(emailDiv)
     });
   });
-}
+};
+
+      
+  
