@@ -12,3 +12,7 @@ textarea {
     text-decoration: none !important; /* Remove underline on hover */
     font-weight: bold;
 }
+
+.btn btn-sm btn-outline-primary {
+    color: black;
+}

@@ -5,7 +5,6 @@ from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import HttpResponse, HttpResponseRedirect, render
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Email
 
@@ -20,8 +19,6 @@ def index(request):
     else:
         return HttpResponseRedirect(reverse("login"))
 
-
-@csrf_exempt
 @login_required
 def compose(request):
 
@@ -113,8 +110,6 @@ def compose(request):
 
     return JsonResponse({"message": "Email sent successfully."}, status=201)
 
-
-@csrf_exempt
 @login_required
 def email(request, email_id): # to display an individual email, accepting email_id as incoming parameter
     # path("emails/<int:email_id>", views.email, name="email"), so expect the js to have something like
@@ -236,7 +231,7 @@ def register(request):
 
         # Attempt to create new user
         try:
-            user = User.objects.create_user(email, email, password)
+            user = User.objects.create_user(username=email, email=email, password=password)
             user.save()
         except IntegrityError as e:
             print(e)

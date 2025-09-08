@@ -1,0 +1,11 @@
+asgiref       
+colorama      
+Django        
+iniconfig     
+packaging     
+pip           
+pluggy        
+pytest        
+pytest-django 
+sqlparse      
+tzdata        
